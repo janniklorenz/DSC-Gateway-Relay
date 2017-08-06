@@ -6,13 +6,35 @@ module.exports = {
 
 
 	/**
-		port
+		Default port for the clients
 	*/
-	port		:	4001,
+	relay: {
+		/**
+			port
+		*/
+		port		:	4001,
+
+		/**
+			address
+			IPv4/ IPv6 address to bin on. (BSP: "::1")
+		*/
+		address		: 	"0.0.0.0",
+	},
+
 
 	/**
-		address
-		IPv4/ IPv6 address to bin on. (BSP: "::1")
+		A DSC-Gateway will connect to this address to push the data.
 	*/
-	address		: 	"0.0.0.0",
+	controller: {
+		/**
+			port
+		*/
+		port		:	4011,
+
+		/**
+			address
+			IPv4/ IPv6 address to bin on. (BSP: "::1")
+		*/
+		address		: 	"0.0.0.0",
+	}
 };

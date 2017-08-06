@@ -7,59 +7,68 @@
 // to each client.
 //
 
+const http = require("http");
 const child_process = require("child_process");
 
 const SocketIOClient = require("socket.io-client");
+const SocketIO = require("socket.io");
 
 const config = require("./config/");
 
 
+// -------- Server Socket --------
+var server = http.Server();
+server.listen(config.network.controller.port, config.network.controller.address);
+server.on("listening", function() {
+  console.info("DSC-Gateway-Relay Controller started (%s:%s)", server.address().address, server.address().port);
+});
 
-// Start Main Server Processes
-var socketServerProcess = child_process.fork("./lib/SocketServer.js");
-socketServerProcess.on("message", function(event){
 
-  // -------- Client Socket --------
-  var clientSocket = SocketIOClient(config.relay.dscGatewayServer);
+// --------- relay connection handling -------
+var io = SocketIO(server);
+io.on("connection", function(socket){
+  console.info("DSC-Gateway controller client connected");
 
-  clientSocket.on('connect', function(){
-    console.info("DSC-Gateway client socket connected");
-  });
-  clientSocket.on('disconnect', function(){
-    console.info("DSC-Gateway client socket disconnected");
+  socket.on('disconnect', function(){
+    console.info("DSC-Gateway controller client disconnected");
     socketServerProcess.send({
       type: "disconnect",
     });
   });
 
-  clientSocket.on("onlineLines", function(data){
-    console.log("on onlineLines")
+  socket.on("onlineLines", function(data){
     socketServerProcess.send({
       type: "onlineLines",
       data: data,
     });
   });
-  clientSocket.on("setConfig", function(data){
-    console.log("on setConfig")
+  socket.on("setConfig", function(data){
     socketServerProcess.send({
       type: "setConfig",
       data: data,
     });
   });
-  clientSocket.on("setData", function(data){
-    console.log("on setData")
+  socket.on("setData", function(data){
     socketServerProcess.send({
       type: "setData",
       data: data,
     });
   });
-  clientSocket.on("setTeam", function(data){
-    console.log("on setTeam")
+  socket.on("setTeam", function(data){
     socketServerProcess.send({
       type: "setTeam",
       data: data,
     });
   });
+
+});
+
+
+// Start Main Server Processes
+var socketServerProcess = child_process.fork("./lib/GatewayHandler/Server/");
+socketServerProcess.send({
+  type: "connect",
+  data: config.network.relay,
 });
 socketServerProcess.on("exit", function(){
   console.error("[Main Process] Socket Server Worker did exit, stopping DSC...");
